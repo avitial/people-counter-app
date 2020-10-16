@@ -75,6 +75,14 @@ def connect_mqtt():
 
     return client
 
+def preprocess(image, new_shape):
+    
+    in_frame = cv2.resize(image, new_shape)
+    in_frame = in_frame.transpose((2,0,1))
+    in_frame = in_frame.reshape(1, *in_frame.shape)
+
+    return in_frame
+
 
 def infer_on_stream(args, client):
     """
@@ -91,20 +99,34 @@ def infer_on_stream(args, client):
     prob_threshold = args.prob_threshold
 
     ### TODO: Load the model through `infer_network` ###
-    
+    infer_network.load_model(args.model, args.device, args.cpu_extension)
+
     ### TODO: Handle the input stream ###
+    input_shape = infer_network.get_input_shape()
 
     ### TODO: Loop until stream is over ###
-
+    while cap.isOpened():
         ### TODO: Read from the video capture ###
-
+        ret, frame = cap.read()
         ### TODO: Pre-process the image as needed ###
+        initial_w = cap.get(3) # width
+        initial_h = cap.get(2) # height
+        processed_frame = preprocess(frame,(input_shape[3], input_shape[2]))
+
+
+
 
         ### TODO: Start asynchronous inference for specified request ###
+        inference_start = time.time()
+        infer_network.exec_net(processed_frame)
 
         ### TODO: Wait for the result ###
+        if infer_network.wait() == 0:
+            inference_end = time.time()
+            detection_time = inference_end - inference_start
 
             ### TODO: Get the results of the inference request ###
+            res = infer_network.get_output()
 
             ### TODO: Extract any desired stats from the results ###
 
