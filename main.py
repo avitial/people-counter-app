@@ -99,7 +99,7 @@ def infer_on_stream(args, client):
     prob_threshold = args.prob_threshold
 
     ### TODO: Load the model through `infer_network` ###
-    infer_network.load_model(args.model, args.device, args.cpu_extension)
+    load_ms = infer_network.load_model(args.model, args.device, args.cpu_extension)
 
     ### TODO: Handle the input stream ###
     input_shape = infer_network.get_input_shape()
@@ -111,11 +111,9 @@ def infer_on_stream(args, client):
         ### TODO: Pre-process the image as needed ###
         initial_w = cap.get(3) # width
         initial_h = cap.get(2) # height
+        
         processed_frame = preprocess(frame,(input_shape[3], input_shape[2]))
-
-
-
-
+        
         ### TODO: Start asynchronous inference for specified request ###
         inference_start = time.time()
         infer_network.exec_net(processed_frame)
