@@ -53,13 +53,13 @@ class Network:
         
         ### TODO: Add any necessary extensions ###
         if extensions and 'CPU' in device: 
-            ie.add_extension(extensions, device)
+            self.plugin.add_extension(extensions, device)
 
         # Read IR as IENetwork
         self.network = IENetwork(model=model_xml, weights=model_bin)
         
         ### TODO: Check for supported layers ###
-        supported_layers = ie.query_network(self.network, device)
+        supported_layers = self.plugin.query_network(self.network, device)
         not_supported_layers = [l for l in self.network.layers.keys() if l not in supported_layers]
         if len(not_supported_layers) != 0:
             log.error("These layers are not supported by the plugin for device {}:\n {}".format(plugin.device, ', '.join(not_supported_layers)))
@@ -70,14 +70,12 @@ class Network:
         ### TODO: Return the loaded inference plugin ###
         log.info("Reading IR...")
         self.exec_network = self.plugin.load_network(network=self.network, device_name=device, num_requests=0)
-
   
         self.input_blob = next(iter(self.network.inputs))
-        self.output_blob = next(iter(self.network.outputs))
-        
+        self.output_blob = next(iter(self.network.outputs))        
 
         ### Note: You may need to update the function parameters. ###
-        return ie, self.get_input_shape()
+        return self.plugin, self.get_input_shape()
 
 
     def get_input_shape(self):
@@ -92,15 +90,15 @@ class Network:
         
         return
 
-    def wait(self, request_id):
+    def wait(self):
         ### TODO: Wait for the request to be complete. ###
-        status = self.network.requests[request_id].wait()
+        status = self.exec_network.requests[0].wait()
         ### TODO: Return any necessary information ###
         ### Note: You may need to update the function parameters. ###
         return status
 
     def get_output(self):
         ### TODO: Extract and return the output results
-        output = self.exec_network.requests[request_id].outputs[self.output_blob]
+        output = self.exec_network.requests[0].outputs[self.output_blob]
         ### Note: You may need to update the function parameters. ###
         return output

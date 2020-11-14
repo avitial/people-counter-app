@@ -28,7 +28,7 @@ import json
 import cv2
 
 import logging as log
-import paho.mqtt.client as mqtt
+#import paho.mqtt.client as mqtt
 
 from argparse import ArgumentParser
 from inference import Network
@@ -65,6 +65,7 @@ def build_argparser():
     parser.add_argument("-pt", "--prob_threshold", type=float, default=0.5,
                         help="Probability threshold for detections filtering"
                         "(0.5 by default)")
+
     return parser
 
 
@@ -75,16 +76,15 @@ def connect_mqtt():
 
     return client
 
-def preprocess(image, new_shape):
+def preprocess(frame, new_shape, n, c):
     
-    in_frame = cv2.resize(image, new_shape)
-    in_frame = in_frame.transpose((2,0,1))
-    in_frame = in_frame.reshape(1, *in_frame.shape)
+    new_frame = cv2.resize(frame, new_shape)
+    new_frame = new_frame.transpose((2,0,1))
+    new_frame = new_frame.reshape((n, c, new_shape[0], new_shape[1]))
 
-    return in_frame
+    return new_frame
 
-
-def infer_on_stream(args, client):
+def infer_on_stream(args):
     """
     Initialize the inference network, stream video to network,
     and output stats and video.
@@ -93,50 +93,117 @@ def infer_on_stream(args, client):
     :param client: MQTT client
     :return: None
     """
+    # Vars
+    ct = 0
+    duration = 0
+    frame_ct = 0
+    in_frame = False
+    predictions = []
+    total_ct = 0
+
+    # OpenCV settings
+    color = (78, 45, 0) 
+    font = cv2.FONT_HERSHEY_COMPLEX 
+    font_scale = 0.4 
+    org = (10, 200) 
+    thickness = 1
+
     # Initialise the class
     infer_network = Network()
     # Set Probability threshold for detections
     prob_threshold = args.prob_threshold
 
     ### TODO: Load the model through `infer_network` ###
-    load_ms = infer_network.load_model(args.model, args.device, args.cpu_extension)
+    load_ms = infer_network.load_model(args.model, args.device, 1, 1, 2, args.cpu_extension)
 
     ### TODO: Handle the input stream ###
-    input_shape = infer_network.get_input_shape()
+    n, c, h, w = infer_network.get_input_shape()
 
+    input_stream = args.input
+    assert os.path.isfile(args.input), "Specified input file doesn't exist"
+    cap = cv2.VideoCapture(input_stream)
+    print("To close the application, press 'ESC' with focus on the output window")
+    
     ### TODO: Loop until stream is over ###
     while cap.isOpened():
+
+        detections = 0 ## reset detections in current frame
         ### TODO: Read from the video capture ###
         ret, frame = cap.read()
-        ### TODO: Pre-process the image as needed ###
-        initial_w = cap.get(3) # width
-        initial_h = cap.get(2) # height
-        
-        processed_frame = preprocess(frame,(input_shape[3], input_shape[2]))
-        
+        if not ret:
+        	break
+        ### TODO: Pre-process the image as needed ###       
+        processed_frame = preprocess(frame, (w,h), n, c)
+        frame_ct += 1
         ### TODO: Start asynchronous inference for specified request ###
-        inference_start = time.time()
+        inf_start = time.time()
         infer_network.exec_net(processed_frame)
 
         ### TODO: Wait for the result ###
         if infer_network.wait() == 0:
-            inference_end = time.time()
-            detection_time = inference_end - inference_start
+            inf_end = time.time()
+            det_time = inf_end - inf_start
 
             ### TODO: Get the results of the inference request ###
             res = infer_network.get_output()
 
             ### TODO: Extract any desired stats from the results ###
+            #Draw detections
+            for obj in res[0][0]:
+                class_id, label, conf, xmin, ymin, xmax, ymax = obj
+                if conf >= prob_threshold:
+                    detections = 1
+                    width = frame.shape[1]
+                    height= frame.shape[0]
+                    xmin = int(xmin*width)
+                    ymin = int(ymin*height)
+                    xmax = int(xmax*width)
+                    ymax = int(ymax*height)
+                    top_left = (xmin, ymin)
+                    bottom_right = (xmax, ymax)
+                    color_obj = (0,255,0)
+                    cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), color_obj, 2)
+                    if not in_frame and not ymin < 75: ## no detection in prev. frame
+                        start_frame = frame_ct ## start counting frames when obj first appears
+                        ct = 1
+                        total_ct += ct
 
+                    in_frame = True
+
+        predictions.append(detections)
+                 
+        if in_frame:
+
+            if detections == 0:
+                frames_since_last_ct += 1
+                if frames_since_last_ct > 10: 
+                   in_frame = False
+                   duration = frame_ct - start_frame
+                   start_frame = frame_ct
+                   ct = 0
+                   frames_since_last_ct = 0 ##reset frames since last count
+            else: 
+                ct = 1
+                frames_since_last_ct = 0
+        
+        cv2.putText(frame, "People in Frame: {}".format(ct), org, font, font_scale, color, thickness, cv2.LINE_AA)
+        cv2.putText(frame, "Avg. Duration (in sec): {}".format(duration/10), (org[0],org[1]+15), font, font_scale, color, thickness, cv2.LINE_AA)
+        cv2.putText(frame, "Total Counted: {}".format(total_ct), (org[0],org[1]+30), font, font_scale, color, thickness, cv2.LINE_AA)
             ### TODO: Calculate and send relevant information on ###
             ### current_count, total_count and duration to the MQTT server ###
             ### Topic "person": keys of "count" and "total" ###
             ### Topic "person/duration": key of "duration" ###
 
         ### TODO: Send the frame to the FFMPEG server ###
-
         ### TODO: Write an output image if `single_image_mode` ###
+        cv2.imshow("Detection Results", frame)
 
+        key = cv2.waitKey(1)
+        if key == 27:
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()
 
 def main():
     """
@@ -147,9 +214,9 @@ def main():
     # Grab command line args
     args = build_argparser().parse_args()
     # Connect to the MQTT server
-    client = connect_mqtt()
+    #client = connect_mqtt()
     # Perform inference on the input stream
-    infer_on_stream(args, client)
+    infer_on_stream(args)
 
 
 if __name__ == '__main__':
