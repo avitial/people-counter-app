@@ -28,11 +28,12 @@ import json
 import cv2
 
 import logging as log
-#import paho.mqtt.client as mqtt
+import paho.mqtt.client as mqtt
 
 from argparse import ArgumentParser
 from inference import Network
 
+from sys import platform
 # MQTT server environment variables
 HOSTNAME = socket.gethostname()
 IPADDRESS = socket.gethostbyname(HOSTNAME)
@@ -40,6 +41,16 @@ MQTT_HOST = IPADDRESS
 MQTT_PORT = 3001
 MQTT_KEEPALIVE_INTERVAL = 60
 
+# Get correct CPU extension
+if platform == "linux" or platform == "linux2":
+    CPU_EXTENSION = "/opt/intel/openvino/deployment_tools/inference_engine/lib/intel64/libcpu_extension_sse4.so"
+    CODEC = 0x00000021
+elif platform == "darwin":
+    CPU_EXTENSION = "/opt/intel/openvino/deployment_tools/inference_engine/lib/intel64/libcpu_extension.dylib"
+    CODEC = cv2.VideoWriter_fourcc('M','J','P','G')
+else:
+    print("Unsupported OS.")
+    exit(1)
 
 def build_argparser():
     """
@@ -71,8 +82,8 @@ def build_argparser():
 
 def connect_mqtt():
     ### TODO: Connect to the MQTT client ###
-    client = mqtt.client()
-    client.connet(MQTT_HOST, MQTT_PORT, MQTT_KEEP_ALIVE_INTERVAL)
+    client = mqtt.Client()
+    client.connect(MQTT_HOST, MQTT_PORT, MQTT_KEEPALIVE_INTERVAL)
 
     return client
 
@@ -84,7 +95,7 @@ def preprocess(frame, new_shape, n, c):
 
     return new_frame
 
-def infer_on_stream(args):
+def infer_on_stream(args, client):
     """
     Initialize the inference network, stream video to network,
     and output stats and video.
@@ -162,7 +173,7 @@ def infer_on_stream(args):
                     top_left = (xmin, ymin)
                     bottom_right = (xmax, ymax)
                     color_obj = (0,255,0)
-                    cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), color_obj, 2)
+                    frame = cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), color_obj, 2)
                     if not in_frame and not ymin < 75: ## no detection in prev. frame
                         start_frame = frame_ct ## start counting frames when obj first appears
                         ct = 1
@@ -186,17 +197,21 @@ def infer_on_stream(args):
                 ct = 1
                 frames_since_last_ct = 0
         
-        cv2.putText(frame, "People in Frame: {}".format(ct), org, font, font_scale, color, thickness, cv2.LINE_AA)
-        cv2.putText(frame, "Avg. Duration (in sec): {}".format(duration/10), (org[0],org[1]+15), font, font_scale, color, thickness, cv2.LINE_AA)
-        cv2.putText(frame, "Total Counted: {}".format(total_ct), (org[0],org[1]+30), font, font_scale, color, thickness, cv2.LINE_AA)
+        frame = cv2.putText(frame, "People in Frame: {}".format(ct), org, font, font_scale, color, thickness, cv2.LINE_AA)
+        frame = cv2.putText(frame, "Avg. Duration (in sec): {}".format(duration/10), (org[0],org[1]+15), font, font_scale, color, thickness, cv2.LINE_AA)
+        frame = cv2.putText(frame, "Total Counted: {}".format(total_ct), (org[0],org[1]+30), font, font_scale, color, thickness, cv2.LINE_AA)
             ### TODO: Calculate and send relevant information on ###
             ### current_count, total_count and duration to the MQTT server ###
             ### Topic "person": keys of "count" and "total" ###
             ### Topic "person/duration": key of "duration" ###
+        client.publish("person", json.dumps({"count": detections,"total": total_ct}))
+        client.publish("person/duration", json.dumps({"duration": duration/10}))
 
         ### TODO: Send the frame to the FFMPEG server ###
         ### TODO: Write an output image if `single_image_mode` ###
-        cv2.imshow("Detection Results", frame)
+        sys.stdout.buffer.write(frame)
+        sys.stdout.flush()
+        frame = cv2.imshow("Detection Results", frame)
 
         key = cv2.waitKey(1)
         if key == 27:
@@ -204,6 +219,7 @@ def infer_on_stream(args):
 
     cap.release()
     cv2.destroyAllWindows()
+    client.disconnect()
 
 def main():
     """
@@ -214,9 +230,9 @@ def main():
     # Grab command line args
     args = build_argparser().parse_args()
     # Connect to the MQTT server
-    #client = connect_mqtt()
+    client = connect_mqtt()
     # Perform inference on the input stream
-    infer_on_stream(args)
+    infer_on_stream(args, client)
 
 
 if __name__ == '__main__':
