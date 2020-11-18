@@ -34,26 +34,15 @@ deployed edge model. The potential effects of each of these are as follows...
 
 ## Model Research
 
-[This heading is only required if a suitable model was not found after trying out at least three
-different models. However, you may also use this heading to detail how you converted 
-a successful model.]
+Details on how to convert pre-trained model successfully.
 
-In investigating potential people counter models, I tried each of the following three models:
-
-- Model 1: [Name]
-  - [Model Source]
-  - I converted the model to an Intermediate Representation with the following arguments...
-  - The model was insufficient for the app because...
-  - I tried to improve the model for the app by...
-  
-- Model 2: [Name]
-  - [Model Source]
-  - I converted the model to an Intermediate Representation with the following arguments...
-  - The model was insufficient for the app because...
-  - I tried to improve the model for the app by...
-
-- Model 3: [Name]
-  - [Model Source]
-  - I converted the model to an Intermediate Representation with the following arguments...
-  - The model was insufficient for the app because...
-  - I tried to improve the model for the app by...
+- SSD Lite MobileNet V2 COCO: 
+  - Model Source: http://download.tensorflow.org/models/object_detection/ssdlite_mobilenet_v2_coco_2018_05_09.tar.gz
+  - I converted the model to an Intermediate Representation with the following arguments: 
+    --input_model=frozen_inference_graph.pb \
+    --input_shape=[1,300,300,3] \
+    --reverse_input_channels \
+    --transformations_config /opt/intel/openvino_2021/deployment_tools/model_optimizer/extensions/front/tf/ssd_v2_support.json \
+    --tensorflow_object_detection_api_pipeline_config pipeline.config
+  - Model Optimizer command for Linux: $ python3 /opt/intel/openvino/deployment_tools/model_optimizer/mo_tf.py --input_model=frozen_inference_graph.pb --input_shape=[1,300,300,3] --reverse_input_channels --transformations_config /opt/intel/openvino/deployment_tools/model_optimizer/extensions/front/tf/ssd_v2_support.json --tensorflow_object_detection_api_pipeline_config pipeline.config 
+  - Model Optimizer command for Windows: $ python "C:\Program Files (x86)\Intel\openvino\deployment_tools\model_optimizer\mo_tf.py" --input_model=frozen_inference_graph.pb  --input_shape=[1,300,300,3] --reverse_input_channels --transformations_config "C:\Program Files (x86)\Intel\openvino\deployment_tools\model_optimizer\extensions\front\tf\ssd_v2_support.json" --tensorflow_object_detection_api_pipeline_config pipeline.config
