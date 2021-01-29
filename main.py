@@ -41,17 +41,6 @@ MQTT_HOST = IPADDRESS
 MQTT_PORT = 3001
 MQTT_KEEPALIVE_INTERVAL = 60
 
-# Get correct CPU extension
-if platform == "linux" or platform == "linux2":
-    CPU_EXTENSION = "/opt/intel/openvino/deployment_tools/inference_engine/lib/intel64/libcpu_extension_sse4.so"
-    CODEC = 0x00000021
-elif platform == "darwin":
-    CPU_EXTENSION = "/opt/intel/openvino/deployment_tools/inference_engine/lib/intel64/libcpu_extension.dylib"
-    CODEC = cv2.VideoWriter_fourcc('M','J','P','G')
-else:
-    print("Unsupported OS.")
-    exit(1)
-
 def build_argparser():
     """
     Parse command line arguments.

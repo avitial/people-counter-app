@@ -62,7 +62,7 @@ class Network:
         supported_layers = self.plugin.query_network(self.network, device)
         not_supported_layers = [l for l in self.network.layers.keys() if l not in supported_layers]
         if len(not_supported_layers) != 0:
-            log.error("These layers are not supported by the plugin for device {}:\n {}".format(plugin.device, ', '.join(not_supported_layers)))
+            log.error("These layers are not supported by the plugin for device {}:\n {}".format(device, ', '.join(not_supported_layers)))
             log.error("Please try to specify cpu extensions library path in demo's command line parameters using -l "
                       "or --cpu_extension command line argument")
             sys.exit(1)

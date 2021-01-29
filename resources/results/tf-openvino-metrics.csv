@@ -1,0 +1,6 @@
+# Metric	TensorFlow	OpenVINO	%Difference
+Inference Time (s):	36.45	14.07	61.41
+Avg. Inference (ms):	13.07	4.89	62.58
+Accuracy (%):	92.04	88.95	3.35
+FPS:	4.79	99.09	1970.12
+Model File Size (MB):	18.99	17.19	9.46
