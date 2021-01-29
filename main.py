@@ -64,13 +64,16 @@ def build_argparser():
                              "specified (CPU by default)")
     parser.add_argument("-pt", "--prob_threshold", type=float, default=0.5,
                         help="Probability threshold for detections filtering"
-                        "(0.5 by default)")
+                        "(0.5 by default)"),
+    parser.add_argument("-fm", "--frame_metrics", type=bool, default=False,
+                        help="Enable metrics on displayed frames."
+                        "(False by default)")
 
     return parser
 
 
 def connect_mqtt():
-    ### TODO: Connect to the MQTT client ###
+    ### Connect to the MQTT client ###
     client = mqtt.Client()
     client.connect(MQTT_HOST, MQTT_PORT, MQTT_KEEPALIVE_INTERVAL)
 
@@ -113,10 +116,10 @@ def infer_on_stream(args, client):
     # Set Probability threshold for detections
     prob_threshold = args.prob_threshold
 
-    ### TODO: Load the model through `infer_network` ###
+    ### Load the model through `infer_network` ###
     load_ms = infer_network.load_model(args.model, args.device, 1, 1, 2, args.cpu_extension)
 
-    ### TODO: Handle the input stream ###
+    ### Handle the input stream ###
     n, c, h, w = infer_network.get_input_shape()
 
     input_stream = args.input
@@ -124,30 +127,30 @@ def infer_on_stream(args, client):
     cap = cv2.VideoCapture(input_stream)
     print("To close the application, press 'ESC' with focus on the output window")
     
-    ### TODO: Loop until stream is over ###
+    ### Loop until stream is over ###
     while cap.isOpened():
 
         detections = 0 ## reset detections in current frame
-        ### TODO: Read from the video capture ###
+        ### Read from the video capture ###
         ret, frame = cap.read()
         if not ret:
         	break
-        ### TODO: Pre-process the image as needed ###       
+        ### Pre-process the image as needed ###       
         processed_frame = preprocess(frame, (w,h), n, c)
         frame_ct += 1
-        ### TODO: Start asynchronous inference for specified request ###
+        ### Start asynchronous inference for specified request ###
         inf_start = time.time()
         infer_network.exec_net(processed_frame)
 
-        ### TODO: Wait for the result ###
+        ### Wait for the result ###
         if infer_network.wait() == 0:
             inf_end = time.time()
             det_time = inf_end - inf_start
 
-            ### TODO: Get the results of the inference request ###
+            ### Get the results of the inference request ###
             res = infer_network.get_output()
 
-            ### TODO: Extract any desired stats from the results ###
+            ### Extract any desired stats from the results ###
             #Draw detections
             for obj in res[0][0]:
                 class_id, label, conf, xmin, ymin, xmax, ymax = obj
@@ -186,18 +189,19 @@ def infer_on_stream(args, client):
                 ct = 1
                 frames_since_last_ct = 0
         
-        frame = cv2.putText(frame, "People in Frame: {}".format(ct), org, font, font_scale, color, thickness, cv2.LINE_AA)
-        frame = cv2.putText(frame, "Avg. Duration (in sec): {}".format(duration/10), (org[0],org[1]+15), font, font_scale, color, thickness, cv2.LINE_AA)
-        frame = cv2.putText(frame, "Total Counted: {}".format(total_ct), (org[0],org[1]+30), font, font_scale, color, thickness, cv2.LINE_AA)
-            ### TODO: Calculate and send relevant information on ###
+        if args.frame_metrics:
+	        frame = cv2.putText(frame, "People in Frame: {}".format(ct), org, font, font_scale, color, thickness, cv2.LINE_AA)
+	        frame = cv2.putText(frame, "Avg. Duration (in sec): {}".format(duration/10), (org[0],org[1]+15), font, font_scale, color, thickness, cv2.LINE_AA)
+	        frame = cv2.putText(frame, "Total Counted: {}".format(total_ct), (org[0],org[1]+30), font, font_scale, color, thickness, cv2.LINE_AA)
+	        ### Calculate and send relevant information on ###
             ### current_count, total_count and duration to the MQTT server ###
             ### Topic "person": keys of "count" and "total" ###
             ### Topic "person/duration": key of "duration" ###
         client.publish("person", json.dumps({"count": detections,"total": total_ct}))
         client.publish("person/duration", json.dumps({"duration": duration/10}))
 
-        ### TODO: Send the frame to the FFMPEG server ###
-        ### TODO: Write an output image if `single_image_mode` ###
+        ### Send the frame to the FFMPEG server ###
+        ### Write an output image if `single_image_mode` ###
         sys.stdout.buffer.write(frame)
         sys.stdout.flush()
         frame = cv2.imshow("Detection Results", frame)
