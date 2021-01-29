@@ -66,7 +66,7 @@ My method to compare models before and after conversion to Intermediate Represen
 To run the Jupyter notebook it is necessary to source the environment variables for OpenVINO prior starting the notebook, otherwise there will be an exception thrown by the interpreter. Steps to run the file as follows:
   - Open Linux terminal and source OpenVINO environment variables: $ source /opt/intel/openvino/bin/setupvars.sh
   - Start notebook: $ jupyter notebook
-  - Run object_detection-tf-openvino.ipynb 
+  - Run object_detection-tf-openvino.ipynb within webapp in browser
 
 ## Assess Model Use Cases
 
