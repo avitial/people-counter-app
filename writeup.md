@@ -1,6 +1,23 @@
 # Project Write-Up
 
-For this project I decided to use ssdlite_mobilenet_v2_coco_2018_05_09 model as the model footprint was small and for this specific usa case it met the project needs. To run the app 
+For this project I decided to use ssdlite_mobilenet_v2_coco_2018_05_09 model as the model footprint was small and for this specific usa case it met the project needs. To run the application follow these steps from main directory:
+
+  1. Setup environment variables: $ source /opt/intel/openvino/bin/setupvars.sh
+  2. Start the Mosca server, if successfull you will see 'Mosca server started': 
+      $ cd webservice/server/node-server
+      $ node ./server.js
+  3. Open new terminal and start the GUI, if successful you will see webpack "Compiled successfully":
+      $ cd webservice/ui
+      $ npm run dev
+  4. Open new terminal and start FFmpeg Server:
+      $ sudo ffserver -f ./ffmpeg/server.conf
+  5. Open new terminal and run the code:
+      $ source /opt/intel/openvino/bin/setupvars.sh
+      $ python3 main.py -i resources/Pedestrian_Detect_2_1_1.mp4 -m model/ssdlite_mobilenet_v2_coco_2018_05_09/ssdlite_mobilenet_v2_coco.xml -l /opt/intel/openvino/deployment_tools/inference_engine/lib/intel64/libcpu_extension_sse4.so -d CPU -pt 0.6 | ffmpeg -v warning -f rawvideo -pixel_format bgr24 -video_size 768x432 -framerate 24 -i - http://0.0.0.0:3004/fac.ffm
+
+For an unkown reason the GUI wasn't able to display the data sent to the Mosca server, altough data was being sent to it by the client and published. This seemed to work fine and display on my workspace's GUI, either way a boolean flag was implemented on app to display metrics in frame (-fm, --frame_metrics).
+    Published to person/duration <- {"duration": 13.6}
+    Published to person <- {"count": 0, "total": 2}
 
 
 ## Explaining Custom Layers
@@ -49,7 +66,7 @@ My method to compare models before and after conversion to Intermediate Represen
 To run the Jupyter notebook it is necessary to source the environment variables for OpenVINO prior starting the notebook, otherwise there will be an exception thrown by the interpreter. Steps to run the file as follows:
   - Open Linux terminal and source OpenVINO environment variables: $ source /opt/intel/openvino/bin/setupvars.sh
   - Start notebook: $ jupyter notebook
-  - Run object_detection_tutorial
+  - Run object_detection-tf-openvino.ipynb 
 
 ## Assess Model Use Cases
 
@@ -78,11 +95,10 @@ Details on how to convert pre-trained model successfully.
 
 - SSD Lite MobileNet V2 COCO: 
   - Model Source: http://download.tensorflow.org/models/object_detection/ssdlite_mobilenet_v2_coco_2018_05_09.tar.gz
-  - I converted the model to an Intermediate Representation with the following arguments: 
+  - To convert the model to an Intermediate Representation, use the following arguments: 
     --input_model=frozen_inference_graph.pb \
     --input_shape=[1,300,300,3] \
     --reverse_input_channels \
     --transformations_config /opt/intel/openvino/deployment_tools/model_optimizer/extensions/front/tf/ssd_v2_support.json \
     --tensorflow_object_detection_api_pipeline_config pipeline.config
-  - Model Optimizer command for Linux: $ python3 /opt/intel/openvino/deployment_tools/model_optimizer/mo_tf.py --input_model=frozen_inference_graph.pb --input_shape=[1,300,300,3] --reverse_input_channels --transformations_config /opt/intel/openvino/deployment_tools/model_optimizer/extensions/front/tf/ssd_v2_support.json --tensorflow_object_detection_api_pipeline_config pipeline.config 
-  - Model Optimizer command for Windows: $ python "C:\Program Files (x86)\Intel\openvino\deployment_tools\model_optimizer\mo_tf.py" --input_model=frozen_inference_graph.pb  --input_shape=[1,300,300,3] --reverse_input_channels --transformations_config "C:\Program Files (x86)\Intel\openvino\deployment_tools\model_optimizer\extensions\front\tf\ssd_v2_support.json" --tensorflow_object_detection_api_pipeline_config pipeline.config
+  - Full Model Optimizer command for Linux: $ python3 /opt/intel/openvino/deployment_tools/model_optimizer/mo_tf.py --input_model=frozen_inference_graph.pb --input_shape=[1,300,300,3] --reverse_input_channels --transformations_config /opt/intel/openvino/deployment_tools/model_optimizer/extensions/front/tf/ssd_v2_support.json --tensorflow_object_detection_api_pipeline_config pipeline.config
