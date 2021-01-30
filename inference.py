@@ -55,7 +55,7 @@ class Network:
         if extensions and 'CPU' in device: 
             self.plugin.add_extension(extensions, device)
 
-        # Read IR as IENetwork
+        ### Read IR as IENetwork
         self.network = IENetwork(model=model_xml, weights=model_bin)
         
         ### Check for supported layers ###
@@ -95,6 +95,6 @@ class Network:
         return status
 
     def get_output(self):
-        ### Extract and return the output results
+        ### Extract and return the output results ###
         output = self.exec_network.requests[0].outputs[self.output_blob]
         return output
