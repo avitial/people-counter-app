@@ -15,9 +15,10 @@ For this project I decided to use ssdlite_mobilenet_v2_coco_2018_05_09 model as 
       $ source /opt/intel/openvino/bin/setupvars.sh
       $ python3 main.py -i resources/Pedestrian_Detect_2_1_1.mp4 -m model/ssdlite_mobilenet_v2_coco_2018_05_09/ssdlite_mobilenet_v2_coco.xml -l /opt/intel/openvino/deployment_tools/inference_engine/lib/intel64/libcpu_extension_sse4.so -d CPU -pt 0.6 | ffmpeg -v warning -f rawvideo -pixel_format bgr24 -video_size 768x432 -framerate 24 -i - http://0.0.0.0:3004/fac.ffm
 
-For an unkown reason the GUI wasn't able to display the data sent to the Mosca server, altough data was being sent to it by the client and published. This seemed to work fine and display on my workspace's GUI, either way a boolean flag was implemented on app to display metrics in frame (-fm, --frame_metrics).
-    Published to person/duration <- {"duration": 13.6}
-    Published to person <- {"count": 0, "total": 2}
+## Things to Note:
+For an unkown reason the GUI wasn't displaying the data sent to the Mosca server, altough data was being sent to it by the client and published. This seemed to work fine and display on my workspace's GUI, either way a boolean flag was implemented on app to display metrics in frame (-fm, --frame_metrics). I later on realized issue was because by default the webservice is setup to utilize the classroom workspace, so this has been changed. 
+
+Another small bug was the display of the video looked wrong, probably because of a format issue (purple-ish look on video) but OpenCV does display the video correctly in local machine. A feature to display the frame with OpenCV was added (-sf, --show_frame).
 
 
 ## Explaining Custom Layers
