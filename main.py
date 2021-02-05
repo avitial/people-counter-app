@@ -26,7 +26,6 @@ import time
 import socket
 import json
 import cv2
-import numpy as np 
 import logging as log
 import paho.mqtt.client as mqtt
 
@@ -140,14 +139,14 @@ def infer_on_stream(args, client):
             input_stream = 0 ###if RealSense D435 used, set this to 2 for RGB feed
         elif args.input.endswith('.mp4'): ###check for valid video format
             if not(os.path.exists(args.input)):
-                assert os.path.isfile(args.input), "Specified input file doesn't exist"
+                log.error("Specified input file doesn't exist")
                 return 1
             input_type = 'vid'
             input_stream = args.input
         elif filter(args.input.endswith, input_formats) and not os.path.isdir(args.input): ###check for valid image format
             if not(os.path.exists(os.path.abspath(args.input))):
-            	assert os.path.isfile(args.input), "Specified input file doesn't exist"
-            	return 1
+                log.error("Specified input file doesn't exist")
+                return 1
             input_type = 'img'
             input_stream = os.path.abspath(args.input)
         elif os.path.isdir(args.input) and os.path.exists(args.input):
@@ -158,6 +157,9 @@ def infer_on_stream(args, client):
                 image_paths.append(os.path.join(os.path.abspath(args.input),f))
             input_type = 'dir'
             image_total = len(image_paths) ###set total of valid images found
+            if image_total == 0:
+                log.error("No valid image files exist in directory")
+                return 1
             input_stream = image_paths
         else: 
             log.error("Specified input file {} doesn't exist".format(args.input))
@@ -258,7 +260,6 @@ def infer_on_stream(args, client):
                 i+=1
             else:
                 cap.release()
-                return 0
         elif input_type == 'dir':
             if i < image_total:
                 cap = cv2.VideoCapture(input_stream[i])
@@ -278,6 +279,7 @@ def infer_on_stream(args, client):
     cap.release()
     cv2.destroyAllWindows()
     client.disconnect()
+
 
 def main():
     """
