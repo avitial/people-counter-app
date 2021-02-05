@@ -1,9 +1,9 @@
 # Project Write-Up
 
-For this project I decided to use ssdlite_mobilenet_v2_coco_2018_05_09 model as the model footprint was small and for this specific usa case it met the project needs. To run the application follow these steps from main directory:
+For this project I decided to use ssdlite_mobilenet_v2_coco_2018_05_09 model as the model footprint was small and for this specific use case it met the project needs. To run the application follow these steps from main directory:
 
   1. Setup environment variables: $ source /opt/intel/openvino/bin/setupvars.sh
-  2. Start the Mosca server, if successfull you will see 'Mosca server started': 
+  2. Start the Mosca server, if successful you will see 'Mosca server started': 
       $ cd webservice/server/node-server
       $ node ./server.js
   3. Open new terminal and start the GUI, if successful you will see webpack "Compiled successfully":
@@ -16,9 +16,9 @@ For this project I decided to use ssdlite_mobilenet_v2_coco_2018_05_09 model as 
       $ python3 main.py -i resources/Pedestrian_Detect_2_1_1.mp4 -m model/ssdlite_mobilenet_v2_coco_2018_05_09/ssdlite_mobilenet_v2_coco.xml -l /opt/intel/openvino/deployment_tools/inference_engine/lib/intel64/libcpu_extension_sse4.so -d CPU -pt 0.6 | ffmpeg -v warning -f rawvideo -pixel_format bgr24 -video_size 768x432 -framerate 24 -i - http://0.0.0.0:3004/fac.ffm
 
 ## Things to Note:
-For an unkown reason the GUI wasn't displaying the data sent to the Mosca server, altough data was being sent to it by the client and published. This seemed to work fine and display on my workspace's GUI, either way a boolean flag was implemented on app to display metrics in frame (-fm, --frame_metrics). I later on realized issue was because by default the webservice is setup to utilize the classroom workspace, so this has been changed. 
+For an unknown reason the GUI wasn't displaying the data sent to the Mosca server, although data was being sent to it by the client and published. This seemed to work fine and display on my workspace's GUI, either way a Boolean flag was implemented on app to display metrics in frame (-fm, --frame_metrics). I later on realized issue was because by default the webservice is setup to utilize the classroom workspace, so this has been changed. 
 
-Another small bug was the display of the video looked wrong, probably because of a format issue (purple-ish look on video) but OpenCV does display the video correctly in local machine. A feature to display the frame with OpenCV was added (-sf, --show_frame).
+Another small bug was the display of the video looked wrong, probably because of a format issue (purple-tint look on video) but OpenCV does display the video correctly in local machine. A feature to display the frame with OpenCV was added (-sf, --show_frame). This issue also applies to webcam feed and single/multiple images as input stream for the application, so the feature to display the frame with OpenCV was helpful in case this issue appears.
 
 
 ## Explaining Custom Layers
@@ -49,13 +49,13 @@ My method to compare models before and after conversion to Intermediate Represen
       - The program has two sections for inference; a section for pure TensorFlow and frozen model, and another section for Inference Engine and optimized model.
       - As explained in step 2, each section has two parts: inference frames with people and inference with frames w/out people. 
       - Each section inferences and captures scores of detected objects (if any) for individual frames. Going through all scores, count is kept for true detection and false/no detection based on the confidence (threshold) set by user. In this case threshold is set to .20 by default. The scoring for each frame for both sections is stored under resources/results: for TensorFlow "no-people-results-tf.csv" and "no-people-results-tf", and for OpenVINO Inference Engine "people-results-openvino-cpu.csv" and "no-people-results-openvino-cpu.csv" respectively. Ideally we would have 1050 detections of people in frames and 344 frames without detection, but that of course is not the case as shown in result files.
-      - Using the following formula is how the model's accuracy can be calculated: (true detections of frames w/people + true detections of frames wout/people) / total frames.
-      - With time module the duration of inference was captured, these times were aggregated and averaged after all inference completed. Also the frames per second were calculated for each section; TensorFlow using numpy arrays and Inference Engine using OpenCV.
+      - Using the following formula is how the model's accuracy can be calculated: (true detections of frames w/people + true detections of frames wout/people) / total frames. 
+      - With time module the duration of inference was captured, these times were aggregated and averaged after all inference completed. Also, the frames per second were calculated for each section; TensorFlow using numpy arrays and Inference Engine using OpenCV.
   
   4. Gather and compare results between pure Tensorflow and Inference Engine
       - The difference between model accuracy pre-conversion and post-conversion was slightly different. The original frozen model (SSDLite MobileNetV2 COCO, pre-conversion) was slightly more accurate than the optimized model (post-conversion) with Model Optimizer (MO).
       - The frozen model (.pb file) was larger in size before conversion to Intermediate Representation (IR) files with MO.
-      - The average inference time was much faster with OpenVINO Inference Engine than with pure TensorFlow. In addition it can also inference with other devices (not just CPU) like the Neural Compute Stick (Myriad VPU). 
+      - The average inference time was much faster with OpenVINO Inference Engine than with pure TensorFlow. In addition, it can also inference with other devices (not just CPU) like the Neural Compute Stick (Myriad VPU). 
 
       Metric                TensorFlow  OpenVINO  %Difference 
       Inference Time (s):   35.42       13.98     60.52 
@@ -64,7 +64,7 @@ My method to compare models before and after conversion to Intermediate Represen
       FPS:                  4.90        99.69     1933.31 
       Model File Size (MB): 18.99       17.19     9.46
 
-To run the Jupyter notebook it is necessary to source the environment variables for OpenVINO prior starting the notebook, otherwise there will be an exception thrown by the interpreter. Steps to run the file as follows:
+To run the Jupyter notebook it is necessary to source the environment variables for OpenVINO prior starting the Jupyter notebook, otherwise there will be an exception thrown by the interpreter when reaching the OpenVINO Inference Engine section. Steps to run the file as follows:
   - Open Linux terminal and source OpenVINO environment variables: $ source /opt/intel/openvino/bin/setupvars.sh
   - Start notebook: $ jupyter notebook
   - Run object_detection-tf-openvino.ipynb within webapp in browser
@@ -85,7 +85,7 @@ Some of the potential use cases of the people counter app are...
 
 Lighting, model accuracy, and camera focal length/image size have different effects on a deployed model. The potential effects of each of these are as follows: the user must account for the environment where the application will be deployed as unaccounted conditions may affect model performance. The recommendation would be to train a model with image data of similar environments to that of the target environment, and/or set expectations for model prior to deployment (i.e. application only needs pedestrian detections during sunny days, therefore if model detects poorly in other scenarios its ok)
 
-As previously stated, lighting conditions could impact the model's ability to recognize objects, as it can alter objects in those frames lighter/darker. For example a model that has been trained to detect pedestrians on a sunny day with traffic may require different training data from a model that detects pedestrians walking sideways during the night. So it is important to consider lightning contitions and other possible variables that could impact a model's ability to perform detection.
+As previously stated, lighting conditions could impact the model's ability to recognize objects, as it can alter objects in those frames lighter/darker. For example, a model that has been trained to detect pedestrians on a sunny day with traffic may require different training data from a model that detects pedestrians walking sideways during the night. So it is important to consider lightning conditions and other possible variables that could impact a model's ability to perform detection.
 
 Another thing to consider is the hardware ability and limitations to perform the task of each individual use case. A high precision model that requires high accuracy may require more compute power and compute time, so the edge device must be able to keep up with the requirements of the given use case. Otherwise among other things, there could be latency penalties as the edge device may take longer processing requests for inference and output results. So evaluating and testing the edge device for a given use case is required.
 
