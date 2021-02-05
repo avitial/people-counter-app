@@ -59,7 +59,7 @@ def build_argparser():
                              "kernels impl.")
     parser.add_argument("-d", "--device", type=str, default="CPU",
                         help="Specify the target device to infer on: "
-                             "CPU, GPU, FPGA or MYRIAD is acceptable. Sample "
+                             "CPU or GPU. Sample "
                              "will look for a suitable plugin for device "
                              "specified (CPU by default)")
     parser.add_argument("-pt", "--prob_threshold", type=float, default=0.5,
@@ -251,7 +251,9 @@ def infer_on_stream(args, client):
         ### Write an output image if `single_image_mode` ###
         sys.stdout.buffer.write(frame)
         sys.stdout.flush()
-    
+    	
+    	### Process framce(s) if input is directory or single image ###
+    	### Logic to show frame(s) in OpenCV ###
         if args.show_frame and (input_type == 'img' or input_type == 'dir'):
             frame = cv2.imshow("Detection Results", frame)
             cv2.waitKey(1500) ###delay to show single image
