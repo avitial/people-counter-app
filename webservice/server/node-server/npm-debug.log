@@ -1,48 +1,23 @@
 0 info it worked if it ends with ok
-1 verbose cli [ '/usr/bin/node',
-1 verbose cli   '/usr/bin/npm',
-1 verbose cli   'install',
-1 verbose cli   'json-schema==1.2.0' ]
+1 verbose cli [ '/usr/bin/node', '/usr/bin/npm', 'run', 'dev' ]
 2 info using npm@3.5.2
 3 info using node@v8.10.0
-4 silly loadCurrentTree Starting
-5 silly install loadCurrentTree
-6 silly install readLocalPackageData
-7 silly fetchPackageMetaData json-schema==1.2.0
-8 silly fetchOtherPackageData json-schema==1.2.0
-9 silly cache add args [ 'json-schema==1.2.0', null ]
-10 verbose cache add spec json-schema==1.2.0
-11 silly cache add parsed spec Result {
-11 silly cache add   raw: 'json-schema==1.2.0',
-11 silly cache add   scope: null,
-11 silly cache add   name: null,
-11 silly cache add   rawSpec: 'json-schema==1.2.0',
-11 silly cache add   spec: '/home/leavitia/udacity/project/nd131-openvino-fundamentals-project-starter/webservice/server/node-server/json-schema==1.2.0',
-11 silly cache add   type: 'local' }
-12 error addLocal Could not install /home/leavitia/udacity/project/nd131-openvino-fundamentals-project-starter/webservice/server/node-server/json-schema==1.2.0
-13 silly fetchPackageMetaData Error: ENOENT: no such file or directory, open '/home/leavitia/udacity/project/nd131-openvino-fundamentals-project-starter/webservice/server/node-server/json-schema==1.2.0'
-13 silly fetchPackageMetaData  error for json-schema==1.2.0 { Error: ENOENT: no such file or directory, open '/home/leavitia/udacity/project/nd131-openvino-fundamentals-project-starter/webservice/server/node-server/json-schema==1.2.0'
-13 silly fetchPackageMetaData   errno: -2,
-13 silly fetchPackageMetaData   code: 'ENOENT',
-13 silly fetchPackageMetaData   syscall: 'open',
-13 silly fetchPackageMetaData   path: '/home/leavitia/udacity/project/nd131-openvino-fundamentals-project-starter/webservice/server/node-server/json-schema==1.2.0' }
-14 silly rollbackFailedOptional Starting
-15 silly rollbackFailedOptional Finishing
-16 silly runTopLevelLifecycles Starting
-17 silly runTopLevelLifecycles Finishing
-18 silly install printInstalled
-19 verbose stack Error: ENOENT: no such file or directory, open '/home/leavitia/udacity/project/nd131-openvino-fundamentals-project-starter/webservice/server/node-server/json-schema==1.2.0'
-20 verbose cwd /home/leavitia/udacity/project/nd131-openvino-fundamentals-project-starter/webservice/server/node-server
-21 error Linux 4.15.0-123-generic
-22 error argv "/usr/bin/node" "/usr/bin/npm" "install" "json-schema==1.2.0"
-23 error node v8.10.0
-24 error npm  v3.5.2
-25 error path /home/leavitia/udacity/project/nd131-openvino-fundamentals-project-starter/webservice/server/node-server/json-schema==1.2.0
-26 error code ENOENT
-27 error errno -2
-28 error syscall open
-29 error enoent ENOENT: no such file or directory, open '/home/leavitia/udacity/project/nd131-openvino-fundamentals-project-starter/webservice/server/node-server/json-schema==1.2.0'
-30 error enoent ENOENT: no such file or directory, open '/home/leavitia/udacity/project/nd131-openvino-fundamentals-project-starter/webservice/server/node-server/json-schema==1.2.0'
-30 error enoent This is most likely not a problem with npm itself
-30 error enoent and is related to npm not being able to find a file.
-31 verbose exit [ -2, true ]
+4 verbose stack Error: missing script: dev
+4 verbose stack     at run (/usr/share/npm/lib/run-script.js:147:19)
+4 verbose stack     at /usr/share/npm/lib/run-script.js:57:5
+4 verbose stack     at /usr/share/npm/node_modules/read-package-json/read-json.js:345:5
+4 verbose stack     at checkBinReferences_ (/usr/share/npm/node_modules/read-package-json/read-json.js:309:45)
+4 verbose stack     at final (/usr/share/npm/node_modules/read-package-json/read-json.js:343:3)
+4 verbose stack     at then (/usr/share/npm/node_modules/read-package-json/read-json.js:113:5)
+4 verbose stack     at /usr/share/npm/node_modules/read-package-json/read-json.js:232:12
+4 verbose stack     at /usr/share/npm/node_modules/graceful-fs/graceful-fs.js:76:16
+4 verbose stack     at FSReqWrap.readFileAfterClose [as oncomplete] (fs.js:511:3)
+5 verbose cwd /home/leavitia/udacity/people-counter-app/webservice/server/node-server
+6 error Linux 4.15.0-135-generic
+7 error argv "/usr/bin/node" "/usr/bin/npm" "run" "dev"
+8 error node v8.10.0
+9 error npm  v3.5.2
+10 error missing script: dev
+11 error If you need help, you may report this error at:
+11 error     <https://github.com/npm/npm/issues>
+12 verbose exit [ 1, true ]
